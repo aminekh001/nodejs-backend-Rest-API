@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Room Data</title>
+<style>
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    th, td {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+    }
+    th {
+        background-color: #f2f2f2;
+    }
+</style>
+</head>
+<body>
+
+<label for="roomNumberSelect">Select a Room Number:</label>
+<select id="roomNumberSelect" onchange="displayRoomData()">
+  <option value="">Select a Room Number</option>
+  <!-- Options will be populated dynamically after fetching data -->
+</select>
+
+<label for="dateSelect">Select a Date:</label>
+<input type="date" id="dateSelect" onchange="displayRoomData()">
+
+<table id="roomDataTable">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Capacity</th>
+      <th>Start Date</th>
+      <th>Start Time</th>
+      <th>End Date</th>
+      <th>End Time</th>
+    </tr>
+  </thead>
+  <tbody id="roomDataBody">
+    <!-- Data will be populated here -->
+  </tbody>
+</table>
+
+<script>
+async function fetchData() {
+  try {
+    // Replace this with the provided data source URL
+    const response = await fetch('http://localhost:5000/api/res/get/getAll');
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    return [];
+  }
+}
+
+async function updateTable() {
+  const roomNumberSelect = document.getElementById("roomNumberSelect");
+  roomNumberSelect.innerHTML = '<option value="">Select a Room Number</option>';
+
+  const data = await fetchData();
+  if (data.length > 0) {
+    const uniqueRoomNumbers = [...new Set(data.map(room => room.numero))];
+    uniqueRoomNumbers.forEach(roomNumber => {
+      const option = document.createElement('option');
+      option.value = roomNumber;
+      option.textContent = roomNumber;
+      roomNumberSelect.appendChild(option);
+    });
+  }
+}
+
+async function displayRoomData() {
+  const selectedRoomNumber = document.getElementById("roomNumberSelect").value;
+  const selectedDate = document.getElementById("dateSelect").value;
+  const tableBody = document.getElementById("roomDataBody");
+  tableBody.innerHTML = "";
+
+  const data = await fetchData();
+  if (data.length > 0) {
+    const filteredRooms = data.filter(room => room.numero === selectedRoomNumber && room.starTime && room.starTime.startsWith(selectedDate));
+    if (filteredRooms.length > 0) {
+      filteredRooms.forEach(room => {
+        const newRow = tableBody.insertRow();
+        newRow.insertCell().textContent = room.numero;
+        newRow.insertCell().textContent = room.capacite;
+        newRow.insertCell().textContent = formatDate(room.starTime);
+        newRow.insertCell().textContent = formatTime(room.starTime);
+        newRow.insertCell().textContent = formatDate(room.endTime);
+        newRow.insertCell().textContent = formatTime(room.endTime);
+      });
+    } else {
+      const newRow = tableBody.insertRow();
+      const newCell = newRow.insertCell();
+      newCell.colSpan = 6;
+      newCell.textContent = "No data found for the selected room number and date.";
+    }
+  }
+}
+
+// Populate the select options and table initially
+updateTable();
+
+function formatDate(dateTimeString) {
+  const date = new Date(dateTimeString);
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function formatTime(dateTimeString) {
+  const date = new Date(dateTimeString);
+  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+</script>
+
+</body>
+</html>

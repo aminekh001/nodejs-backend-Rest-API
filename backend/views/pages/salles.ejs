@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equipements</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"> 
+</head>
+<body>
+    <div class="container">
+        <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
+          <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
+            <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"></use></svg>
+            <span class="fs-4">Smart Reservation</span>
+          </a>
+    
+          <ul class="nav nav-pills">
+            <li class="nav-item"><a href="/views/myReservation" class="nav-link " aria-current="page">My space</a></li>
+            <li class="nav-item"><a href="/views/reservation" class="nav-link">Reservation</a></li>
+            <li class="nav-item"><a href="/views/salles" class="nav-link active " >salles</a></li>
+            <li class="nav-item"><a href="#" class="nav-link">FAQs</a></li>
+            <li class="nav-item"><a href="#" class="nav-link">About</a></li>
+            <button id="deleteLocalStorageBtn" class="btn btn-success" style="float:right">logout</button>
+          </ul>
+        </header>
+      </div>
+     
+
+    <h1>Salle System</h1>
+    <form id="salle-form">
+        <label for="eq-list">Choose an equipment</label>
+        <select id="eq-list" class="formGroup"></select>
+    
+        <!-- Hidden input field to store the selected equipment ID -->
+        <input type="hidden" id="eq-id" name="equipements">
+    
+        <div class="formGroup">
+            <input type="text" id="capacite" name="capacite" placeholder="Capacité"> 
+        </div>
+        <div class="formGroup">
+            <input type="text" id="numero" name="numero" placeholder="Numéro"> 
+        </div>
+        <button type="submit">Add</button>
+    </form> 
+
+    <script>
+window.onload = async function() {
+    const eqList = document.getElementById("eq-list");
+    const selectedEqInput = document.getElementById("eq-id");
+    const salleForm = document.getElementById("salle-form");
+
+    try {
+        // Fetching equipment options
+        const responseEquipments = await fetch("/api/equipement/equipements");
+        const equipementsData = await responseEquipments.json();
+
+        // Clear any existing options
+        eqList.innerHTML = '';
+
+        // Populate the select options
+        equipementsData.forEach(equipements => {
+            const option = document.createElement("option");
+            option.value = equipements._id;
+            option.textContent = equipements.nome;
+            eqList.appendChild(option);
+        });
+
+        // Update the hidden input field with the selected equipment ID when the user makes a selection
+        eqList.addEventListener("change", function() {
+            selectedEqInput.value = eqList.value;
+            console.log("Selected equipment ID:", selectedEqInput.value);
+        });
+
+        // Handle form submission
+        salleForm.addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(salleForm);
+            const formDataObject = {};
+            formData.forEach((value, key) => {
+                formDataObject[key] = value;
+            });
+
+            try {
+                // Fetching token from localStorage
+                const token = localStorage.getItem("token");
+
+                // Adding token to headers
+                const response = await fetch("/api/salle/add", {
+                    method: "POST",
+                    headers: {
+                        "authorization": "Bearer " + token,
+                        "Content-Type": "application/json"
+                    },
+                    
+                    body: JSON.stringify(formDataObject)
+                });
+
+                if (response.ok) {
+                    console.log("Salle added successfully!");
+                    // Optionally, redirect the user or show a success message
+                } else {
+                    console.error("Failed to add salle:", response.statusText);
+                }
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching equipements:", error);
+    }
+};
+    </script>
+
+<script>
+    document.getElementById('deleteLocalStorageBtn').addEventListener('click', function() {
+        // Clear the local storage
+        localStorage.clear();
+        window.location.replace("http://localhost:5000/views/login");
+    });
+    </script>
+</body>
+</html>
