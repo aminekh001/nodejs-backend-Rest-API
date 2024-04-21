@@ -3,14 +3,14 @@ const nodemailer =require("nodemailer");
 const transport=nodemailer.createTransport({
     service:"gmail",
     auth:{
-        user:"amine.khairi88@gmail.com",
-        pass:"hztpclozylfvksih",
+        user:"test@gmail.com",
+        pass:"******************************************************",
     },
 });
 
 module.exports.sendConfirmationEmail = (email, code, id)=>{
     transport.sendMail({
-            from:"amine@gmail.com",
+            from:"test@gmail.com",
             to: email,
             subject:"confirmer avec email",
             html:`<h1>Email de confirmation</h1>
